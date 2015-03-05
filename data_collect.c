@@ -245,12 +245,12 @@ int get_hostbyname_cz(void)
     return 0;
 }
 
-int dbsrv_send(int sock, int type, void *data, int len)
+int dbsrv_send(int sock, int token, int type, void *data, int len)
 {
     // header
     struct _header header;
     memset(&header, 0, sizeof(header));
-    header.token = htonl(0x2014);
+    header.token = htonl(token);
     header.type = htonl(type);
     header.len = htonl(len);
     int length = len + sizeof(header);
@@ -335,7 +335,7 @@ int send_guestlogout(char *p_buffer)
                 // print struct
                 printf("Send to server: m_mac:[%s];g_mac:[%s];timein:[%ld];timeout:[%ld]\n", logout.m_mac, logout.g_mac, logout.login, logout.logout);
                 // send info to server.
-                dbsrv_send(sock, G_OUT, (void *)&logout, sizeof(logout));
+                dbsrv_send(sock, 0x2014, G_OUT, (void *)&logout, sizeof(logout));
                 close(sock);
                 printf("Send success!\n");
                 

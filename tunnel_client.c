@@ -334,7 +334,7 @@ int send_datas(unsigned short cmd, unsigned short count, unsigned char *p_datas)
 
 
 /*********************thread***************************************/
-pthread_t tid;
+/*pthread_t tid;
 
 void *thrd_func(void *arg){
     printf("I am new thread!\n");
@@ -366,8 +366,128 @@ void create_thread()
     }
     printf("Create thread success!\n");
 }
-
+*/
 /*********************fork***************************************/
+
+
+void create_process(void)
+{
+    int sign = 0x0F;
+    pid_t pc1, pr1, pc2, pr2, pc3, pr3, pc4, pr4;
+
+    while (1)
+    {        
+        if ((sign&0x01) == 0x01)
+        {
+            sign &= ~0x01;
+            printf("create process 1!\n");
+            pc1 = fork();
+            if (pc1 < 0) 
+				printf("Error occured on forking 1.\n");
+            else if (pc1 == 0)
+            {
+      //          socket_handle1();
+                exit(0);
+            }
+        }
+        if ((sign&0x02) == 0x02)
+        {
+            sign &= ~0x02;
+            printf("create process 2!\n");
+            pc2 = fork();
+            if (pc2 < 0) 
+                printf("Error occured on forking 2.\n");
+            else if (pc2 == 0)
+            { 
+                while(1) {
+					init_netlink();
+                    main_netlink();
+                    sleep(5);
+                }
+                exit(0);    
+            }
+        }
+        if ((sign&0x04) == 0x04)
+        {
+            sign &= ~0x04;
+            printf("create process 3!\n");
+            pc3 = fork();
+            if (pc3 < 0) 
+                printf("Error occured on forking 3.\n");
+            else if (pc3 == 0)
+            { 
+      //          init_mips_dpi();
+                exit(0);
+            }
+        } 
+
+        if ((sign&0x08) == 0x08)
+        {
+            sign &= ~0x08;
+            printf("create process 4!\n");
+            pc4 = fork();
+            if (pc4 < 0) 
+                printf("Error occured on forking 4.\n");
+            else if (pc4 == 0)
+            { 
+      //          data_collect_init();
+				while(1) {
+       //             data_collect_main();
+                    sleep(2);
+                }
+                exit(0);
+            }
+        } 
+
+
+        while(1)
+        {
+            sleep(60); // every 15 second do the check.
+
+            pr1 = waitpid(pc1, NULL, WNOHANG);
+            pr2 = waitpid(pc2, NULL, WNOHANG);
+            pr3 = waitpid(pc3, NULL, WNOHANG);
+			pr4 = waitpid(pc3, NULL, WNOHANG);
+            if (pr1 == 0 && pr2 == 0 && pr3 ==0 && pr4 ==0)
+            { 
+                printf("All process run OK \n");
+                
+            }
+            else
+            {
+                if (pr1 == pc1)
+                {
+                    printf("process1 exit\n");
+                    sign |= 0x01;
+                }
+                if (pr2 == pc2)
+                {
+                    printf("process2 exit\n");
+                    sign |= 0x02;
+                }
+                if (pr3 == pc3)
+                {
+                    printf("process3 exit\n");
+                    sign |= 0x04;
+                }
+				if (pr4 == pc4)
+                {
+                    printf("process4 exit\n");
+                    sign |= 0x08;
+                }
+                if (sign > 0)
+                {
+                    printf("sign=[%d];\n", sign);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+
+/*
 void create_process(void)
 {
     int sign = 0x03;
@@ -401,7 +521,7 @@ void create_process(void)
             { 
                 int i = 1;
                 printf("child 22222!\n");
-				create_thread();
+				//create_thread();
 				init_mips_dpi();
 				
 				//pc_firewall_init();
@@ -453,3 +573,4 @@ void create_process(void)
         }
     }
 }
+*/

@@ -8,8 +8,8 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <pcap/pcap.h>
-#include <process.h>
-#include <report.h>
+#include "process.h"
+#include "report.h"
 
 #include "mips_dpi.h"
 
@@ -22,11 +22,13 @@
 #define SNAP_LEN 1518
 
 void do_packet(u_char *args, const struct pcap_pkthdr *pkthdr, const u_char *raw_pkt) {   
-    do_dpi(raw_pkt);
+	report_conf_s *r_conf = 	(report_conf_s *)args;
+
+	do_dpi(raw_pkt, r_conf);
     if(ready_to_send()) {
-    	init_mqsock();
-    	send_msgs_to_mq();
-    	close_mqsock();
+    	init_mqsock(r_conf);
+    	send_msgs_to_mq(r_conf);
+    	close_mqsock(r_conf);
 		printf("get a bag\n");
     }   
     return;
@@ -35,11 +37,8 @@ void do_packet(u_char *args, const struct pcap_pkthdr *pkthdr, const u_char *raw
 int init_mips_dpi(void) {
     
     // init WQ
-    get_mmac();
-    get_mq_conf();
-    get_mqserver_hostbyname();
-    init_msgs_buf();
-
+    report_conf_s *r_conf;
+	r_conf = init_report();
 
     // init pcap;
     char error_content[PCAP_ERRBUF_SIZE]; //error buffer
@@ -67,7 +66,7 @@ int init_mips_dpi(void) {
     }
 
     // loop, when packets come, callback function will be called
-    pcap_loop(pcap_handle, -1, do_packet, NULL);
+    pcap_loop(pcap_handle, -1, do_packet, (u_char *)r_conf);
 
     // clean up
     pcap_freecode(&fp);
@@ -75,7 +74,7 @@ int init_mips_dpi(void) {
     printf("\nCapture complete.\n");
     
     // clean WQ
-    distory_msgs_buf();
+    exit_report(r_conf);
 
     return 0;
 }

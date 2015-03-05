@@ -2,6 +2,7 @@
 #define _PROCESS_H
 
 #include <netinet/in.h>
+#include "report.h"
 
 #define SNAP_LEN 1518
 
@@ -64,7 +65,7 @@ struct dpi_udp {
 	unsigned short th_len;
 	unsigned short th_check;
 };
-extern int get_mmac(void);
-extern int do_dpi(const char *packet);
+
+extern int do_dpi(const char *packet, report_conf_s *r_conf);
 
 #endif
