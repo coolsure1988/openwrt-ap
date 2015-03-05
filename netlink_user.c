@@ -153,9 +153,9 @@ void main_netlink(void) {
 		// traverse
 		mac_tmp_ptr = strtok(NULL, ";"); 
 	}	
-
 	
-	//*(mac_send_server_head + strlen(mac_send_server_head)-) = '\0';
+	memcpy(mac_send_server + strlen(mac_send_server)-1, "]}", 2);
+	//*(mac_send_server + strlen(mac_send_server)-1) = '\0';
 	//strcat(mac_send_server_head, "]}");
 
 	printf("--------\n%s\n--------\n", mac_send_server_head+12);
@@ -180,7 +180,7 @@ void main_netlink(void) {
 		.len = htonl(strlen(mac_send_server_head))
 	};
 	memcpy(mac_send_server_head, &msg_header, HDR_SIZE);
-	int ret = send(sock, mac_send_server_head, strlen(mac_send_server_head+12), 0);
+	int ret = send(sock, mac_send_server_head, strlen(mac_send_server_head), 0);
 	if(ret < 0) {
 		printf("send msg failed ---netlink\n");
 	}
