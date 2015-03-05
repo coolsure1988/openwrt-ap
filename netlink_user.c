@@ -38,6 +38,13 @@ char mac_tmp[18] = {0};
 char *mac_tmp_ptr = mac_tmp;
 char ap_mac[18] = {0};
 
+struct msg_send_server_header {
+	int token;
+	int type;
+	int len;
+};
+
+
 
 int init_netlink(void)
 {
@@ -127,7 +134,10 @@ void main_netlink(void) {
 
 	// read each mac, construct JSON
 	char *mac_send_server = (char *)malloc(mac_buffer_size*5);
+	memset(mac_send_server, 0, mac_buffer_size*5);
 	char *mac_send_server_head = mac_send_server;
+	mac_send_server += 21;
+	memcpy(mac_send_server_head + HDR_SIZE, "{\"rows\":[%s", 9);
 
 	// socket header
 
@@ -137,58 +147,51 @@ void main_netlink(void) {
 	mac_tmp_ptr = strtok(mac_buffer, ";");
 	while(mac_tmp_ptr != NULL) { 
 		if(strlen(mac_tmp_ptr) == 17) {
-			
-			sprintf(mac_send_server, "mmac:%s;gmac:%s;", ap_mac,mac_tmp_ptr);
-			mac_send_server += strlen(mac_send_server);
-
-			
+			sprintf(mac_send_server, "{\"time\":\"%ld\",\"mmac\":\"%s\",\"gmac\":\"%s\",\"flag\":\"4\",\"type\":\"mac\"},", (long)time(NULL), mac_tmp_ptr, ap_mac);
+			mac_send_server += strlen(mac_send_server);	
 		}
-		
 		// traverse
 		mac_tmp_ptr = strtok(NULL, ";"); 
 	}	
 
-	printf("--------\n%s\n--------\n", mac_send_server_head);
-
-
-
-/*
-	printf("%s\n", mac_buffer);
-	char *mac_tmp_ptr = mac_tmp;
-
-	mac_send_server = (char *)malloc(mac_size*6);
-	memset(mac_send_server, 0, mac_size*6);
-	char *mac_send_server_head = mac_send_server;
-	mac_msg_size = 0;
-	strcat(mac_send_server + HDR_SIZE, "{\"row\":[");
-	mac_msg_size = 21;
-	mac_send_server += 21;
-
-	//\"time\":%ld,\"gmac\":\"%s\",\"mmac\":\"%s\"", 
-
 	
-	// read each mac
-	*(mac_buffer + strlen(mac_buffer)) = '\0';  // delete last ';
-	mac_tmp_ptr= strtok(mac_buffer, ";");
-	while(mac_tmp_ptr != NULL) { 
-		//sprintf(mac_send_server + HDR_SIZE + mac_msg_size, "time:%ld,gmac:%s,mmac:%s", (long)time(NULL), mac_tmp_ptr, ap_mac);
-		sprintf(mac_send_server, "time:%ld,gmac:%s,mmac:%s", (long)time(NULL), mac_tmp_ptr, ap_mac);
-		mac_send_server += strlen(mac_send_server);
+	//*(mac_send_server_head + strlen(mac_send_server_head)-) = '\0';
+	//strcat(mac_send_server_head, "]}");
 
-		printf("%s\n", mac_send_server);
-		mac_tmp_ptr = strtok(NULL, ";"); 
+	printf("--------\n%s\n--------\n", mac_send_server_head+12);
+
+	// send to server.
+	struct sockaddr_in s_addr;
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
+	if(sock < 0) {
+		printf("create socket failed---netlink\n");
+		return;
 	}
+	s_addr.sin_family = AF_INET;
+	s_addr.sin_port = htons(5051);
+	s_addr.sin_addr.s_addr = inet_addr("192.168.10.234");
+	if (-1 == connect(sock, (struct sockaddr *)&s_addr, sizeof(s_addr))) {
+		printf("connect failed---netlink\n");
+		return;
+	}
+	struct msg_send_server_header msg_header = {
+		.token = htonl(0x2017),
+		.type = htonl(4),
+		.len = htonl(strlen(mac_send_server_head))
+	};
+	memcpy(mac_send_server_head, &msg_header, HDR_SIZE);
+	int ret = send(sock, mac_send_server_head, strlen(mac_send_server_head+12), 0);
+	if(ret < 0) {
+		printf("send msg failed ---netlink\n");
+	}
+	close(sock);
 
-	strcat(mac_send_server, "]}");
-	mac_msg_size += 2;
+	printf("aaa\n");
 
-	printf("----------\n%s\n---------\n", mac_send_server_head);
-
-	printf("%d\n", mac_msg_size);
-
- */
-
-	free(mac_buffer); 
+	if(mac_buffer != NULL)
+		free(mac_buffer); 
+	if(mac_send_server_head != NULL)
+		free(mac_send_server_head);
  
 	
 	printf("main netlink end\n");
