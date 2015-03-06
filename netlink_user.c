@@ -155,6 +155,7 @@ void main_netlink(void) {
 	}	
 	
 	memcpy(mac_send_server + strlen(mac_send_server)-1, "]}", 2);
+	memcpy(mac_send_server + strlen(mac_send_server)+1, "\0", 0);
 	//*(mac_send_server + strlen(mac_send_server)-1) = '\0';
 	//strcat(mac_send_server_head, "]}");
 
@@ -168,8 +169,8 @@ void main_netlink(void) {
 		return;
 	}
 	s_addr.sin_family = AF_INET;
-	s_addr.sin_port = htons(5051);
-	s_addr.sin_addr.s_addr = inet_addr("192.168.10.234");
+	s_addr.sin_port = htons(5050);
+	s_addr.sin_addr.s_addr = inet_addr("192.168.1.21");
 	if (-1 == connect(sock, (struct sockaddr *)&s_addr, sizeof(s_addr))) {
 		printf("connect failed---netlink\n");
 		return;
@@ -177,10 +178,16 @@ void main_netlink(void) {
 	struct msg_send_server_header msg_header = {
 		.token = htonl(0x2017),
 		.type = htonl(4),
-		.len = htonl(strlen(mac_send_server_head))
+		.len = htonl(strlen(mac_send_server_head+12))
 	};
 	memcpy(mac_send_server_head, &msg_header, HDR_SIZE);
-	int ret = send(sock, mac_send_server_head, strlen(mac_send_server_head), 0);
+
+	printf("token:%d;type:%d;len:%d\n", ntohl(msg_header.token), ntohl(msg_header.type), ntohl(msg_header.len));
+	printf("mac_send_server_head:%s\n", mac_send_server_head);
+	printf("mac_send_server_head+12:%s\n", mac_send_server_head+12);
+	
+	//int ret = send(sock, mac_send_server_head, strlen(mac_send_server_head), 0);
+	int ret = write(sock, mac_send_server_head, strlen(mac_send_server_head+12)+12);
 	if(ret < 0) {
 		printf("send msg failed ---netlink\n");
 	}
