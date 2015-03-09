@@ -147,7 +147,7 @@ void main_netlink(void) {
 	mac_tmp_ptr = strtok(mac_buffer, ";");
 	while(mac_tmp_ptr != NULL) { 
 		if(strlen(mac_tmp_ptr) == 17) {
-			sprintf(mac_send_server, "{\"time\":\"%ld\",\"mmac\":\"%s\",\"gmac\":\"%s\",\"flag\":\"4\",\"type\":\"mac\"},", (long)time(NULL), mac_tmp_ptr, ap_mac);
+			sprintf(mac_send_server, "{\"time\":%ld,\"mmac\":\"%s\",\"gmac\":\"%s\",\"flag\":4,\"type\":\"mac\"},", (long)time(NULL), mac_tmp_ptr, ap_mac);
 			mac_send_server += strlen(mac_send_server);	
 		}
 		// traverse

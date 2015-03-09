@@ -442,7 +442,7 @@ void create_process(void)
 
         while(1)
         {
-            sleep(60); // every 15 second do the check.
+            sleep(5); // every 15 second do the check.
 
             pr1 = waitpid(pc1, NULL, WNOHANG);
             pr2 = waitpid(pc2, NULL, WNOHANG);
